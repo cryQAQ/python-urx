@@ -125,7 +125,7 @@ class Robot(URRobot):
         get current transform from base to to tcp
         """
         pose = URRobot.getl(self, wait, _log)
-        trans = self.csys.inverse * m3d.Transform(pose)
+        trans: m3d.Transform = self.csys.inverse * m3d.Transform(pose)
         if _log:
             self.logger.debug("Returning pose to user: %s", trans.pose_vector)
         return trans
@@ -208,7 +208,8 @@ class Robot(URRobot):
         return current transformation from tcp to current csys
         """
         t = self.get_pose(wait, _log)
-        return t.pose_vector.tolist()
+        pos_vec: m3d.PoseVector = t.pose_vector
+        return pos_vec.array.tolist()
 
     def set_gravity(self, vector):
         if isinstance(vector, m3d.Vector):

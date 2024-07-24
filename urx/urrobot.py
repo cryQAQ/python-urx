@@ -82,14 +82,17 @@ class URRobot(object):
         """
         return self.secmon.is_program_running()
 
-    def send_program(self, prog):
+    def send_program(self, prog, wait=True):
         """
         send a complete program using urscript to the robot
         the program is executed immediatly and any runnning
         program is interrupted
         """
         self.logger.info("Sending program: " + prog)
-        self.secmon.send_program(prog)
+        if wait:
+            self.secmon.send_program(prog)
+        else:
+            self.secmon.send_program_no_wait(prog)
 
     def get_tcp_force(self, wait=True):
         """

@@ -274,6 +274,23 @@ class SecondaryMonitor(Thread):
                 self._prog_queue.append(data)
             data.condition.wait()
             self.logger.debug("program sendt: %s", data)
+    
+    def send_program_no_wait(self, prog):
+        """
+        send program to robot in URRobot format
+        If another program is send while a program is running the first program is aborded.
+        """
+        prog.strip()
+        self.logger.debug("Enqueueing program: %s", prog)
+        if not isinstance(prog, bytes):
+            prog = prog.encode()
+
+        data = Program(prog + b"\n")
+        with data.condition:
+            with self._prog_queue_lock:
+                self._prog_queue.append(data)
+            # data.condition.wait()
+            self.logger.debug("program sendt: %s", data)
 
     def run(self):
         """

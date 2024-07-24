@@ -45,6 +45,7 @@ import os
 import time
 
 from urx.urscript import URScript
+from urx.robot import Robot
 
 # Gripper Variables
 ACT = "ACT"
@@ -140,13 +141,14 @@ class RobotiqScript(URScript):
 class Robotiq_Two_Finger_Gripper(object):
 
     def __init__(self,
-                 robot,
+                 robot: Robot,
                  payload=0.85,
                  speed=255,
                  force=50,
                  socket_host=SOCKET_HOST,
                  socket_port=SOCKET_PORT,
                  socket_name=SOCKET_NAME):
+        assert isinstance(robot, Robot), f"{type(robot)}"
         self.robot = robot
         self.payload = payload
         self.speed = speed
@@ -156,7 +158,7 @@ class Robotiq_Two_Finger_Gripper(object):
         self.socket_name = socket_name
         self.logger = logging.getLogger(u"robotiq")
 
-    def _get_new_urscript(self):
+    def _get_new_urscript(self, sleep=0.1):
         """
         Set up a new URScript to communicate with gripper
         """
@@ -179,12 +181,13 @@ class Robotiq_Two_Finger_Gripper(object):
         urscript._set_gripper_speed(self.speed)
         urscript._set_gripper_force(self.force)
 
+        # chenyuxing: don't do this
         # Initialize the gripper
-        urscript._set_robot_activate()
-        urscript._set_gripper_activate()
+        # urscript._set_robot_activate()
+        # urscript._set_gripper_activate()
 
         # Wait on activation to avoid USB conflicts
-        urscript._sleep(0.1)
+        urscript._sleep(sleep)
 
         return urscript
 
@@ -208,9 +211,36 @@ class Robotiq_Two_Finger_Gripper(object):
         # sleep the code the same amount as the urscript to ensure that
         # the action completes
         time.sleep(sleep)
+    
+    def gripper_action_no_sleep(self, value):
+        """
+        Activate the gripper to a given value from 0 to 255
+
+        0 is open
+        255 is closed
+        """
+        urscript = self._get_new_urscript()
+
+        # Move to the position
+        urscript._set_gripper_position(value)
+
+        # Send the script
+        self.robot.send_program(urscript())
 
     def open_gripper(self):
         self.gripper_action(0)
 
     def close_gripper(self):
         self.gripper_action(255)
+
+    def movej_and_gripper_action(self, joints, gripper_value, acc=0.1, vel=0.05, wait=True, relative=False, threshold=None):
+        urscript_1 = self.robot._format_move("movej", joints, acc, vel)
+
+        urscript_2 = self._get_new_urscript(sleep=0.0)
+        urscript_2._set_gripper_position(gripper_value)
+
+        urscript_2.add_line_to_program(urscript_1)
+        urscript_2._sync()
+
+        # Send the script
+        self.robot.send_program(urscript_2(), wait=False)
