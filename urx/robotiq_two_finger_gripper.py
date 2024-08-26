@@ -191,7 +191,7 @@ class Robotiq_Two_Finger_Gripper(object):
 
         return urscript
 
-    def gripper_action(self, value):
+    def gripper_action(self, value, sleep=2.0):
         """
         Activate the gripper to a given value from 0 to 255
 
@@ -201,7 +201,6 @@ class Robotiq_Two_Finger_Gripper(object):
         urscript = self._get_new_urscript()
 
         # Move to the position
-        sleep = 2.0
         urscript._set_gripper_position(value)
         urscript._sleep(sleep)
 
